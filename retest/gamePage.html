@@ -1,0 +1,199 @@
+<html>
+    <head>
+        <title>Mi Big Flask Test</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+        
+        <style>
+            * { padding: 0; margin: 0; }
+            canvas { background: #eee; display: block; margin: 0 auto; }
+        </style>
+
+        <script type="text/javascript" charset="utf-8">
+            $(document).ready(function(){
+                const parameters = window.location.search;
+                const roomId = parameters.substr(1).split('&')[0].split('=')[1];
+                document.getElementById("roomCodeP").innerHTML = roomId
+                const userName = parameters.substr(1).split('&')[1].split('=')[1];
+                const origin = window.location.origin;
+                const canvas = document.getElementById("theCanvas");
+                const ctx = canvas.getContext("2d");
+                const PLAYER1X0 = 100;
+                const PLAYER1Y0 = 300;
+                const PLAYER2X0 = 400;
+                const PLAYER2Y0 = 100;
+                const PLAYER3X0 = 600;
+                const PLAYER3Y0 = 300;
+                const PLAYER4X0 = 400;
+                const PLAYER4Y0 = 300;
+                var playerId;
+                //1, 2, etc.
+                var playerNumber;
+                var clientPlayer;
+                
+                const players = {
+                    player1: null,
+                    player2: null,
+                    player3: null,
+                    player4: null
+                };
+
+                var leftPressed = false;
+                var rightPressed = false;
+                var upPressed = false;
+                var downPressed = false;
+
+                class Player {
+                    constructor(playerName, x, y) {
+                        this.name = playerName;
+                        this.x = x;
+                        this.y = y;
+                    }
+
+                    drawSelf() {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, 10, 0, Math.PI*2);
+                        ctx.fillStyle = "#0095DD";
+                        ctx.fill();
+                        ctx.closePath();
+                        ctx.fillText(this.name, this.x, this.y - 10);
+                    }
+                }
+
+                const socket = io();
+                console.log(socket.toString() + "socket ------")
+
+                socket.on('after connect', () => {
+                    console.log("after connect ----- before emit")
+                    socket.emit('join event', {
+                        'roomId' : roomId,
+                        'name' : userName
+                    });
+                    console.log("after connect ----- after emit")
+                });
+                socket.on('playerId', (data) => {
+                    console.log("playerId  -----  " + data['playerId'])
+                    playerId = data['playerId'];
+                    playerNumber = data['playerNumber'];
+                    allPlayers = data['players'];
+                    for (const playerN in allPlayers) {
+                        players[playerN] = new Player(allPlayers[playerN].name, allPlayers[playerN].x, allPlayers[playerN].y);
+                    }
+                    clientPlayer = players['player' + playerNumber]
+                });
+                socket.on('player added', (data) => {
+                    console.log("player added  -----  " + JSON.stringify(data))
+                    if (players[data.playerNumber] === null) {
+                        players[data.playerNumber] = new Player(data.name, data.x, data.y);
+                    }
+                });
+                socket.on('player removed', (data) => {
+                    // console.log(data + '   player removed')
+                    players[data.playerNumber] = null;
+                });
+                socket.on('input response', (data) => {
+                    console.log("input response  -----  " + JSON.stringify(data))
+                    clientPlayer.x = data['x'];
+                    clientPlayer.y = data['y'];
+                });
+                socket.on('game update', (data) => {
+                    console.log("game update  -----  " + JSON.stringify(data))
+                    const player1data = data['gameState']['player1'];
+                    const player2data = data['gameState']['player2'];
+                    const player3data = data['gameState']['player3'];
+                    const player4data = data['gameState']['player4'];
+                    if (player1data != null && players.player1 != null) {
+                        players.player1.x = player1data['x'];
+                        players.player1.y = player1data['y'];
+                    }
+                    if (player2data != null && players.player2 != null) {
+                        players.player2.x = player2data['x'];
+                        players.player2.y = player2data['y'];
+                    }
+                    if (player3data != null && players.player3 != null) {
+                        players.player3.x = player3data['x'];
+                        players.player3.y = player3data['y'];
+                    }
+                    if (player4data != null && players.player4 != null) {
+                        players.player4.x = player4data['x'];
+                        players.player4.y = player4data['y'];
+                    }
+                    
+                    // players.player2.x = data['player2']['x'];
+                    // players.player2.y = data['player2']['y'];
+                    // players.player3.x = data['player3']['x'];
+                    // players.player3.y = data['player3']['y'];
+                    // players.player4.x = data['player4']['x'];
+                    // players.player4.y = data['player4']['y'];
+                });
+
+                document.addEventListener("keydown", keyDownHandler, false);
+                document.addEventListener("keyup", keyUpHandler, false);
+
+                function keyDownHandler(e) {
+                    if (e.key == "Right" || e.key == "ArrowRight") {
+                        rightPressed = true;
+                    } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                        leftPressed = true;
+                    } else if (e.key == "Up" || e.key == "ArrowUp") {
+                        upPressed = true;
+                    } else if (e.key == "Down" || e.key == "ArrowDown") {
+                        downPressed = true;
+                    }
+                }
+
+                function keyUpHandler(e) {
+                    if (e.key == "Right" || e.key == "ArrowRight") {
+                        rightPressed = false;
+                    } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                        leftPressed = false;
+                    } else if (e.key == "Up" || e.key == "ArrowUp") {
+                        upPressed = false;
+                    } else if (e.key == "Down" || e.key == "ArrowDown") {
+                        downPressed = false;
+                    }
+                }
+
+                function update() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    for (const player in players) {
+                        currPlayer = players[player];
+                        if (currPlayer !== null) {
+                            currPlayer.drawSelf();
+                        }
+                    }
+                    const input = {
+                            'roomId' : roomId,
+                            'playerId' : playerId,
+                            'rightPressed' : rightPressed,
+                            'leftPressed' : leftPressed,
+                            'upPressed' : upPressed,
+                            'downPressed' : downPressed
+                        };
+                    if (rightPressed) {
+                        // clientPlayer.x += 1;
+                    } else if (leftPressed) {
+                        // clientPlayer.x -= 1;
+                    }
+                    if (upPressed) {
+                        // clientPlayer.y -= 1;
+                    } else if (downPressed) {
+                        // clientPlayer.y += 1;
+                    }
+                    socket.emit('playerInput', input)
+                }
+
+                setInterval(update, 100);
+
+
+            });
+        </script>
+
+
+    </head>
+    <body>
+        <canvas id="theCanvas" width="1000" height="700"></canvas>
+        <h3>Room Code</h3>
+        <p id="roomCodeP">---</p>
+    </body>
+</html>
