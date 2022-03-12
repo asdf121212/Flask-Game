@@ -1,3 +1,4 @@
+# from gevent import monkey
 from socket import socket
 from flask import Flask, redirect, request, escape, render_template
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -16,6 +17,7 @@ def generateNewRoomId():
     while id in roomIds:
         id = ''.join(random.choice(chars) for i in range(10))
     return id
+
 
 
 #should check if input is in an acceptable list
@@ -46,7 +48,9 @@ def create_game():
             roomIds.append(roomId)
             newGame = Game(roomId=roomId)
             games[roomId] = newGame
-            return redirect("/game?roomId={0}&name={1}".format(roomId, name))
+            playerId = newGame.generateNewPlayerId()
+            player = newGame.addPlayer(name, playerId)
+            return redirect("/game?roomId={0}&name={1}&playerId={2}".format(roomId, name, playerId))
         else:
             return '400'
     else:
@@ -58,7 +62,9 @@ def join_game():
     roomId = escape(request.args['existingGameId'])
     if roomId in roomIds and len(games[roomId].players) < 4:
         name = escape(request.args['name'])
-        return redirect("/game?roomId={0}&name={1}".format(roomId, name))
+        playerId = games[roomId].generateNewPlayerId()
+        player = games[roomId].addPlayer(name, playerId)
+        return redirect("/game?roomId={0}&name={1}&playerId={2}".format(roomId, name, playerId))
     else:
         return '400'
 
@@ -80,12 +86,14 @@ def client_join(data):
         if 'roomId' in data.keys() and 'name' in data.keys():
             room = escape(data['roomId'])
             name = escape(data['name'])
+            playerId = escape(data['playerId'])
             game = games[room]
-            if len(game.players) < 4:
-                player = game.addPlayer(name)
-                join_room(room)
-                emit('playerId', {'playerId' : player.playerId, 'playerNumber': player.playerNumber, 'players': game.getPlayerDict()})
-                emit('player added', { 'playerNumber':player.playerNumStr, 'name':player.name, 'x':player.x, 'y':player.y }, to=room)
+            # if len(game.players) < 4:
+                # player = game.addPlayer(name)
+            player = game.players[playerId]
+            join_room(room)
+                # emit('playerId', {'playerId' : player.playerId, 'playerNumber': player.playerNumber, 'players': game.getPlayerDict()})
+            emit('join gamestate', { 'playerNumber':player.playerNumStr, 'players': game.getPlayerDict() })
         else:
             return '400'
     except:
@@ -113,6 +121,7 @@ def player_input(data):
 
 # run the app.
 if __name__ == "__main__":
+    # monkey.patch_all()
     # Setting debug to True enables debug output. This line should be
     # removed before deploying a production app.
     application.debug = False

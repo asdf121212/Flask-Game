@@ -15,6 +15,7 @@
                 const roomId = parameters.substr(1).split('&')[0].split('=')[1];
                 document.getElementById("roomCodeP").innerHTML = roomId
                 const userName = parameters.substr(1).split('&')[1].split('=')[1];
+                const playerId = parameters.substr(1).split('&')[2].split('=')[1];//////////////////
                 const origin = window.location.origin;
                 const canvas = document.getElementById("theCanvas");
                 const ctx = canvas.getContext("2d");
@@ -26,7 +27,8 @@
                 const PLAYER3Y0 = 300;
                 const PLAYER4X0 = 400;
                 const PLAYER4Y0 = 300;
-                var playerId;
+                // var playerId;
+
                 //1, 2, etc.
                 var playerNumber;
                 var clientPlayer;
@@ -67,26 +69,27 @@
                     console.log("after connect ----- before emit")
                     socket.emit('join event', {
                         'roomId' : roomId,
-                        'name' : userName
+                        'name' : userName,
+                        'playerId' : playerId
                     });
                     console.log("after connect ----- after emit")
                 });
-                socket.on('playerId', (data) => {
-                    console.log("playerId  -----  " + data['playerId'])
-                    playerId = data['playerId'];
-                    playerNumber = data['playerNumber'];
+                socket.on('join gamestate', (data) => {
+                    console.log("join gamestate  -----  " + data)
+                    // playerId = data['playerId'];
+                    playerNumStr = data['playerNumber'];
                     allPlayers = data['players'];
                     for (const playerN in allPlayers) {
                         players[playerN] = new Player(allPlayers[playerN].name, allPlayers[playerN].x, allPlayers[playerN].y);
                     }
-                    clientPlayer = players['player' + playerNumber]
+                    clientPlayer = players[playerNumStr]
                 });
-                socket.on('player added', (data) => {
-                    console.log("player added  -----  " + JSON.stringify(data))
-                    if (players[data.playerNumber] === null) {
-                        players[data.playerNumber] = new Player(data.name, data.x, data.y);
-                    }
-                });
+                // socket.on('player added', (data) => {
+                //     console.log("player added  -----  " + JSON.stringify(data))
+                //     if (players[data.playerNumber] === null) {
+                //         players[data.playerNumber] = new Player(data.name, data.x, data.y);
+                //     }
+                // });
                 socket.on('player removed', (data) => {
                     // console.log(data + '   player removed')
                     players[data.playerNumber] = null;
@@ -102,21 +105,37 @@
                     const player2data = data['gameState']['player2'];
                     const player3data = data['gameState']['player3'];
                     const player4data = data['gameState']['player4'];
-                    if (player1data != null && players.player1 != null) {
-                        players.player1.x = player1data['x'];
-                        players.player1.y = player1data['y'];
+                    if (player1data != null) {
+                        if (players.player1 == null) {
+                            players.player1 = new Player(player1data['name'], player1data['x'], player1data['y']);
+                        } else {
+                            players.player1.x = player1data['x'];
+                            players.player1.y = player1data['y'];
+                        }
                     }
-                    if (player2data != null && players.player2 != null) {
-                        players.player2.x = player2data['x'];
-                        players.player2.y = player2data['y'];
+                    if (player2data != null) {
+                        if (players.player2 == null) {
+                            players.player2 = new Player(player2data['name'], player2data['x'], player2data['y']);
+                        } else {
+                            players.player2.x = player2data['x'];
+                            players.player2.y = player2data['y'];
+                        }
                     }
-                    if (player3data != null && players.player3 != null) {
-                        players.player3.x = player3data['x'];
-                        players.player3.y = player3data['y'];
+                    if (player3data != null) {
+                        if (players.player3 == null) {
+                            players.player3 = new Player(player3data['name'], player3data['x'], player3data['y']);
+                        } else {
+                            players.player3.x = player3data['x'];
+                            players.player3.y = player3data['y'];
+                        }
                     }
-                    if (player4data != null && players.player4 != null) {
-                        players.player4.x = player4data['x'];
-                        players.player4.y = player4data['y'];
+                    if (player4data != null) {
+                        if (players.player4 == null) {
+                            players.player4 = new Player(player4data['name'], player4data['x'], player4data['y']);
+                        } else {
+                            players.player4.x = player4data['x'];
+                            players.player4.y = player4data['y'];
+                        }
                     }
                     
                     // players.player2.x = data['player2']['x'];
@@ -155,6 +174,9 @@
                 }
 
                 function update() {
+                    if (clientPlayer == null) {
+                        return;
+                    }
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     for (const player in players) {
                         currPlayer = players[player];

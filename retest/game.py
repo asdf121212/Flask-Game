@@ -32,8 +32,8 @@ class Game:
         self.player3 = None
         self.player4 = None
 
-    def addPlayer(self, name):
-        playerId = self.generateNewPlayerId()
+    def addPlayer(self, name, playerId):
+        # playerId = id
         # n = len(self.players)
         if self.player1 == None:
             player = Player(name, playerId, 1, PLAYER1X0, PLAYER1Y0)
