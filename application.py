@@ -6,6 +6,7 @@ from html_page import entryPage, gamePage
 from game import Game
 import string
 import random
+import os
 
 
 roomIds = []
@@ -126,7 +127,7 @@ if __name__ == "__main__":
     # removed before deploying a production app.
     application.debug = False
     # application.run()
-    socketio.run(application)
+    socketio.run(application, port=int(os.environ.get('PORT', 5000)))
 
 # @application.route("/app", methods = ['POST', 'GET'])
 # def app_post():
