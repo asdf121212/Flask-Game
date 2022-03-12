@@ -127,7 +127,7 @@ if __name__ == "__main__":
     # removed before deploying a production app.
     application.debug = False
     # application.run()
-    socketio.run(application, port=int(os.environ.get('PORT', 5000)))
+    socketio.run(application, port=int(os.environ.get('PORT')))
 
 # @application.route("/app", methods = ['POST', 'GET'])
 # def app_post():
