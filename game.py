@@ -16,8 +16,8 @@ MAX_X = 990
 MAX_Y = 690
 MAX_DX = 5
 MAX_DY = 5
-DDX = 0.7
-DDY = 0.7
+DDX = 2
+DDY = 2
 
 T_STEP = 50000 #milliseconds
 
@@ -78,7 +78,7 @@ class Game:
         playerDict = {}
         for playerId in self.players.keys():
             player = self.players[playerId]
-            playerDict[player.playerNumStr] = { 'name' : player.name, 'x' : player.x, 'y' : player.y }
+            playerDict[player.playerNumStr] = { 'name' : player.name, 'x' : player.x, 'y' : player.y, 'dx' : player.dx, 'dy' : player.dy, 'hasEgg' : player.hasEgg, 'dying' : player.dying }
         return playerDict
 
 
@@ -162,3 +162,5 @@ class Player:
         self.y = y
         self.dx = 0
         self.dy = 0
+        self.hasEgg = False
+        self.dying = False

@@ -1,6 +1,6 @@
 # from gevent import monkey
 from socket import socket
-from flask import Flask, redirect, request, escape, render_template
+from flask import Flask, redirect, request, escape, render_template, send_file
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from html_page import entryPage, gamePage
 from game import Game
@@ -72,8 +72,8 @@ def join_game():
 
 @application.route('/game')
 def test():
-    return gamePage
-
+    # return gamePage
+    return send_file('static/gamePage.html')
 
 @socketio.on('connect')
 def connect_client():
@@ -120,6 +120,7 @@ def player_input(data):
     except:
         return '400'
 
+
 # run the app.
 if __name__ == "__main__":
     # monkey.patch_all()
@@ -128,67 +129,4 @@ if __name__ == "__main__":
     application.debug = False
     # application.run()
     socketio.run(application, port=int(os.environ.get('PORT')))
-
-# @application.route("/app", methods = ['POST', 'GET'])
-# def app_post():
-#     if request.method == 'POST':
-#         return '{ "response" : "asdf" }'
-#     elif request.method == 'GET':
-#         return '{ "response" : "vsdf" }'
-
-# @application.route("/app/join")
-# def app_join():
-#     if request.method == 'GET':
-#         return ''
-
-# def authenticate(args):
-#     return True
-
-# @socketio.on('connect')
-# def test_connect():
-#     if not authenticate(request.args):
-#         raise ConnectionRefusedError
-#     emit('after connect', {'data':'test connect'})
-
-# @socketio.on('message')
-# def handle_json(message):
-#     print('received message: ' + str(message))
-#     emit('update value', message)
-
-# The names message, json, connect and disconnect are reserved and cannot be used for named events.
-
-#rooms-- join_room() and leave_room() -- Example:
-
-        # from flask_socketio import join_room, leave_room
-
-        # @socketio.on('join')
-        # def on_join(data):
-        #     username = data['username']
-        #     room = data['room']
-        #     join_room(room)
-        #     send(username + ' has entered the room.', to=room)
-
-        # @socketio.on('leave')
-        # def on_leave(data):
-        #     username = data['username']
-        #     room = data['room']
-        #     leave_room(room)
-        #     send(username + ' has left the room.', to=room)
-
-#emit and socketio.emit argument to="<room_name>"
-#Since all clients are assigned a personal room, to address a message to a single client,
-#the session ID of the client can be used as the to argument.
-
-#socketio.emit is different from regular emit, needs no context and broadcast is assumed
-#def broadcast_without_context():
-    #socketio.emit('some event', {'data': 42})
-
-# @socketio.on('slider value changed')
-# def value_changed(message):
-#     print(message)
-#     emit('update value', message, broadcast=True)
-
-
-# def start_emitting():
-#     for i in range(15):
-#         emit('skielbijel', broadcast=True)
+    # socketio.run(application)
