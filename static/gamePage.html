@@ -193,8 +193,10 @@
                     const gameState = data['gameState'];
                     for (const player in gameState) {
                         const pl = gameState[player];
-                        if (pl == null) {
-                            players[player] = new Player(pl['name'], gameState[player]['x'], pl['y'], player);
+                        if (players[player] == null) {
+                            players[player] = new Player(pl['name'], pl['x'], pl['y'], player);
+                            players[player].dx = pl['dx']
+                            players[player].dy = pl['dy']
                         } else {
                             players[player].x = pl['x'];
                             players[player].y = pl['y'];
