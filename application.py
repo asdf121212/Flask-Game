@@ -1,4 +1,4 @@
-# from gevent import monkey
+from pickle import TRUE
 from socket import socket
 from flask import Flask, redirect, request, escape, render_template, send_file
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -6,13 +6,18 @@ from html_page import entryPage, gamePage
 from game import Game
 import string
 import random
+from datetime import datetime as dt
 import os
 
+DEBUG_MODE = False
+GAME_DELETE_SECS = 10
 
 roomIds = []
 games = {} #roomId : Game
 
 def generateNewRoomId():
+    if DEBUG_MODE:
+        return 'A'
     chars = string.ascii_uppercase
     id = ''.join(random.choice(chars) for i in range(10))
     while id in roomIds:
@@ -42,15 +47,27 @@ def index():
 
 @application.route('/create')
 def create_game():
-    if len(games) < 10:
+    roomIds_to_remove = []
+    for roomId in roomIds:
+        if (dt.now() - games[roomId].timeOfLastBroadcast).seconds >= GAME_DELETE_SECS:
+            roomIds_to_remove.append(roomId)
+    if len(roomIds_to_remove) > 0:
+        for r_id in roomIds_to_remove:
+            roomIds.remove(r_id)
+            del games[r_id]
+    if len(games) < 15:
         if 'name' in request.args.keys():
             name = escape(request.args['name'])
+            if len(name) > 20:
+                return '400'
             roomId = generateNewRoomId()
             roomIds.append(roomId)
             newGame = Game(roomId=roomId)
             games[roomId] = newGame
             playerId = newGame.generateNewPlayerId()
             player = newGame.addPlayer(name, playerId)
+            if len(name) == 0:
+                name = player.playerNumStr
             return redirect("/game?roomId={0}&name={1}&playerId={2}".format(roomId, name, playerId))
         else:
             return '400'
@@ -63,6 +80,8 @@ def join_game():
     roomId = escape(request.args['existingGameId'])
     if roomId in roomIds and len(games[roomId].players) < 4:
         name = escape(request.args['name'])
+        if len(name) > 20:
+            return '400'
         playerId = games[roomId].generateNewPlayerId()
         player = games[roomId].addPlayer(name, playerId)
         return redirect("/game?roomId={0}&name={1}&playerId={2}".format(roomId, name, playerId))
@@ -88,23 +107,31 @@ def client_join(data):
             room = escape(data['roomId'])
             name = escape(data['name'])
             playerId = escape(data['playerId'])
+            if room not in roomIds:
+                return '400'
             game = games[room]
             # if len(game.players) < 4:
                 # player = game.addPlayer(name)
             player = game.players[playerId]
             join_room(room)
-                # emit('playerId', {'playerId' : player.playerId, 'playerNumber': player.playerNumber, 'players': game.getPlayerDict()})
-            emit('join gamestate', { 'playerNumber':player.playerNumStr, 'players': game.getPlayerDict() })
+            emit('join gamestate', { 'playerNumber':player.playerNumStr, 'gamestate': game.getPlayerDict() })
         else:
             return '400'
-    except:
+    except Exception as e:
+        if DEBUG_MODE:
+            print(e)
         return '400'
 
 @socketio.on('playerInput')
 def player_input(data):
     try:
+        #if room id or player id aren't a match- disconnect?
         roomId = escape(data['roomId'])
+        if roomId not in roomIds:
+            return '400'
         playerId = escape(data['playerId'])
+        if playerId not in games[roomId].players:
+            return '400'
         keysPressed = { 'leftPressed' : False, 'rightPressed': False, 'upPressed' : False, 'downPressed' : False }
         
         leftPressed = escape(data['leftPressed'])
@@ -117,16 +144,14 @@ def player_input(data):
         keysPressed['downPressed'] = downPressed == 'True'# and not (upPressed == 'True')
         player = handleInput(roomId, playerId, keysPressed)
         emit('input response', { 'x' : player.x, 'y' : player.y })
-    except:
+    except Exception as e:
+        if DEBUG_MODE:
+            print('player input error / handle player input error')
+            print(e)
         return '400'
 
 
-# run the app.
 if __name__ == "__main__":
-    # monkey.patch_all()
-    # Setting debug to True enables debug output. This line should be
-    # removed before deploying a production app.
-    application.debug = False
-    # application.run()
+    application.debug = True
     socketio.run(application, port=int(os.environ.get('PORT')))
     # socketio.run(application)

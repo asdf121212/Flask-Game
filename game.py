@@ -1,3 +1,4 @@
+from os import remove
 import random
 import string
 from datetime import datetime as dt
@@ -12,14 +13,15 @@ PLAYER3Y0 = 300
 PLAYER4X0 = 400
 PLAYER4Y0 = 300
 
-MAX_X = 990
-MAX_Y = 690
+MAX_X = 946
+MAX_Y = 659
 MAX_DX = 5
 MAX_DY = 5
 DDX = 2
 DDY = 2
 
-T_STEP = 50000 #milliseconds
+T_STEP = 50000 #50 milliseconds
+TIMEOUT_TIME = 10 #seconds
 
 class Game:
 
@@ -56,15 +58,19 @@ class Game:
         return player
 
     def removePlayer(self, playerId):
-        if playerId == self.player1.playerId:
+        # try:
+        if self.player1 != None and playerId == self.player1.playerId:
             self.player1 = None
-        if playerId == self.player2.playerId:
+        if self.player2 != None and playerId == self.player2.playerId:
             self.player2 = None
-        if playerId == self.player3.playerId:
+        if self.player3 != None and playerId == self.player3.playerId:
             self.player3 = None
-        if playerId == self.player4.playerId:
+        if self.player4 != None and playerId == self.player4.playerId:
             self.player4 = None
         del self.players[playerId]
+        # except:
+        #     return 'remove player error'
+
 
     def generateNewPlayerId(self):
         digits = string.digits
@@ -76,9 +82,10 @@ class Game:
 
     def getPlayerDict(self):
         playerDict = {}
+        playerDict['players'] = {}
         for playerId in self.players.keys():
             player = self.players[playerId]
-            playerDict[player.playerNumStr] = { 'name' : player.name, 'x' : player.x, 'y' : player.y, 'dx' : player.dx, 'dy' : player.dy, 'hasEgg' : player.hasEgg, 'dying' : player.dying }
+            playerDict['players'][player.playerNumStr] = { 'name' : player.name, 'x' : player.x, 'y' : player.y, 'dx' : player.dx, 'dy' : player.dy, 'hasEgg' : player.hasEgg, 'dying' : player.dying, 'remove' : False }
         return playerDict
 
 
@@ -144,12 +151,25 @@ class Game:
     #keysPressed - { 'leftPressed' : bool, 'rightPressed' : bool, etc. }
     def handleInput(self, playerId, keysPressed):
         player = self.movePlayer(playerId, keysPressed)
-
+        player.updateResponseTime()
+        gameUpdate = None
         # if end of time step, check for collisions ?
-        if (dt.now() - self.timeOfLastBroadcast).microseconds >= T_STEP:
+        delta_t = dt.now() - self.timeOfLastBroadcast
+        if delta_t.microseconds >= T_STEP or delta_t.seconds >= 1:
+            self.timeOfLastBroadcast = dt.now()
             self.checkCollisions()
             gameUpdate = self.getPlayerDict()
-
+            removePlayerIdList = []
+            removePlayer = False
+            for playerKey in self.players.keys():
+                pl = self.players[playerKey]
+                if (dt.now() - pl.timeOfLastResponse).seconds >= TIMEOUT_TIME:
+                    removePlayerIdList.append(playerKey)
+                    removePlayer = True
+                    gameUpdate['players'][pl.playerNumStr]['remove'] = True
+            if removePlayer:
+                for p_id in removePlayerIdList:
+                    self.removePlayer(p_id)
         return player, gameUpdate
 
 class Player:
@@ -164,3 +184,7 @@ class Player:
         self.dy = 0
         self.hasEgg = False
         self.dying = False
+        self.timeOfLastResponse = dt.now()
+
+    def updateResponseTime(self):
+        self.timeOfLastResponse = dt.now()

@@ -7,18 +7,27 @@
         <style>
             * { padding: 0; margin: 0; }
             canvas { background: #eee; display: block; margin: 0 auto; }
+            body { background: rgb(2,0,36); background: linear-gradient(45deg, rgba(2,0,36,1) 0%, rgba(46,173,75,1) 0%, rgba(179,51,255,1) 100%); }
         </style>
 
         <script type="text/javascript" charset="utf-8">
+            function copyLink() {
+                const copyText = document.getElementById('roomLinkP').innerHTML;
+                navigator.clipboard.writeText(copyText);
+            }
             $(document).ready(function(){
                 const parameters = window.location.search;
                 const roomId = parameters.substr(1).split('&')[0].split('=')[1];
-                document.getElementById("roomCodeP").innerHTML = roomId
+                document.getElementById("roomCodeP").innerHTML = roomId;
+                document.getElementById("roomLinkP").innerHTML = "link copy test";
                 const userName = parameters.substr(1).split('&')[1].split('=')[1];
                 const playerId = parameters.substr(1).split('&')[2].split('=')[1];//////////////////
                 const origin = window.location.origin;
                 const canvas = document.getElementById("theCanvas");
                 const ctx = canvas.getContext("2d");
+                const gradient = ctx.createLinearGradient(0, 0, 1000, 700);
+                gradient.addColorStop(0, '#332738');
+                gradient.addColorStop(1, '#212621');
                 const PLAYER1X0 = 100;
                 const PLAYER1Y0 = 300;
                 const PLAYER2X0 = 400;
@@ -28,11 +37,6 @@
                 const PLAYER4X0 = 400;
                 const PLAYER4Y0 = 300;
                 const EGGMAN_SPRITE_BASE_PATH = '/static/sprites/eggMan/';
-                // var playerId;
-                // const greenFrontSheet = new Image();
-                // const greenBackSheet = new Image();
-                // const greenFrontEggSheet = new Image();
-                // const greenBackEggSheet = new Image();
                 const eggManSpriteSheets = {};
                 const colors = ['green', 'purple', 'yellow', 'cyan'];
                 const modes = ['front', 'back', 'eggFront', 'eggBack'];
@@ -44,13 +48,6 @@
                         eggManSpriteSheets[color][mode] = img;
                     })
                 })
-                // greenFrontSheet.src = '/static/sprites/eggMan/green/greenFront.png';
-                // const greenSheets = {
-                //     front : new Image(),
-                //     back : new Image(),
-                //     eggFront : new Image(),
-                //     eggBack : new Image()
-                // }
                 
                 const eggManCoords = {
                     restUp : { sx : 0, sy : 0, swidth : 54, sheight : 41 },
@@ -92,9 +89,6 @@
                         this.sheets;
                         this.hasEgg = false;
                         this.dying = false;
-                        // this.standCount = 0;
-                        // this.walkCount = 0;
-                        // this.explCount = 0;
                         this.animCount = 0;
                         if (numStr == 'player1') {
                             this.sheets = eggManSpriteSheets['green'];
@@ -108,12 +102,8 @@
                     }
 
                     drawSelf() {
-                        // ctx.beginPath();
-                        // ctx.arc(this.x, this.y, 10, 0, Math.PI*2);
-                        // ctx.fillStyle = "#0095DD";
-                        // ctx.fill();
-                        // ctx.closePath();
-                        // ctx.fillText(this.name, this.x, this.y - 10);
+                        ctx.fillStyle = "#000000";
+                        ctx.fillText(this.name, this.x, this.y - 10);
                         var mode;
                         var sheet;
                         if (this.dy < 0) {
@@ -152,47 +142,35 @@
                 }
 
                 const socket = io();
-                // console.log(socket.toString() + "socket ------")
 
                 socket.on('after connect', () => {
-                    // console.log("after connect ----- before emit")
                     socket.emit('join event', {
                         'roomId' : roomId,
                         'name' : userName,
                         'playerId' : playerId
                     });
-                    // console.log("after connect ----- after emit")
                 });
                 socket.on('join gamestate', (data) => {
-                    // console.log("join gamestate  -----  " + data)
-                    // playerId = data['playerId'];
                     playerNumStr = data['playerNumber'];
-                    allPlayers = data['players'];
+                    allPlayers = data['gamestate']['players'];
                     for (const playerN in allPlayers) {
                         players[playerN] = new Player(allPlayers[playerN].name, allPlayers[playerN].x, allPlayers[playerN].y, playerN);
                     }
                     clientPlayer = players[playerNumStr]
                 });
-                // socket.on('player added', (data) => {
-                //     console.log("player added  -----  " + JSON.stringify(data))
-                //     if (players[data.playerNumber] === null) {
-                //         players[data.playerNumber] = new Player(data.name, data.x, data.y);
-                //     }
+                // socket.on('player removed', (data) => {
+                //     players[data.playerNumber] = null;
                 // });
-                socket.on('player removed', (data) => {
-                    // console.log(data + '   player removed')
-                    players[data.playerNumber] = null;
-                });
                 socket.on('input response', (data) => {
-                    // console.log("input response  -----  " + JSON.stringify(data))
                     clientPlayer.x = data['x'];
                     clientPlayer.y = data['y'];
                 });
                 socket.on('game update', (data) => {
-                    // console.log("game update  -----  " + JSON.stringify(data))
+                    // console.log(JSON.stringify(data))
                     const gameState = data['gameState'];
-                    for (const player in gameState) {
-                        const pl = gameState[player];
+                    const playersUpdate = gameState['players']
+                    for (const player in playersUpdate) {
+                        const pl = playersUpdate[player];
                         if (players[player] == null) {
                             players[player] = new Player(pl['name'], pl['x'], pl['y'], player);
                             players[player].dx = pl['dx']
@@ -203,45 +181,10 @@
                             players[player].dx = pl['dx'];
                             players[player].dy = pl['dy'];
                         }
+                        if (pl['remove'] == true) {
+                            players[player] = null;
+                        }
                     }
-                    // const player1data = data['gameState']['player1'];
-                    // const player2data = data['gameState']['player2'];
-                    // const player3data = data['gameState']['player3'];
-                    // const player4data = data['gameState']['player4'];
-                    // if (player1data != null) {
-                    //     if (players.player1 == null) {
-                    //         players.player1 = new Player(player1data['name'], player1data['x'], player1data['y'], 'player1');
-                    //     } else {
-                    //         players.player1.x = player1data['x'];
-                    //         players.player1.y = player1data['y'];
-                    //         players.player1.dx = player1data['dx']
-                    //     }
-                    // }
-                    // if (player2data != null) {
-                    //     if (players.player2 == null) {
-                    //         players.player2 = new Player(player2data['name'], player2data['x'], player2data['y'], 'player2');
-                    //     } else {
-                    //         players.player2.x = player2data['x'];
-                    //         players.player2.y = player2data['y'];
-                    //     }
-                    // }
-                    // if (player3data != null) {
-                    //     if (players.player3 == null) {
-                    //         players.player3 = new Player(player3data['name'], player3data['x'], player3data['y'], 'player3');
-                    //     } else {
-                    //         players.player3.x = player3data['x'];
-                    //         players.player3.y = player3data['y'];
-                    //     }
-                    // }
-                    // if (player4data != null) {
-                    //     if (players.player4 == null) {
-                    //         players.player4 = new Player(player4data['name'], player4data['x'], player4data['y'], 'player4');
-                    //     } else {
-                    //         players.player4.x = player4data['x'];
-                    //         players.player4.y = player4data['y'];
-                    //     }
-                    // }
-                    
                 });
 
                 document.addEventListener("keydown", keyDownHandler, false);
@@ -272,11 +215,12 @@
                 }
 
                 function update() {
-                    // console.log(window.location.pathname);
                     if (clientPlayer == null) {
                         return;
                     }
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, 1000, 700);
                     for (const player in players) {
                         currPlayer = players[player];
                         if (currPlayer !== null) {
@@ -293,30 +237,21 @@
                         'downPressed' : downPressed
                     };
                     socket.emit('playerInput', input)
-                    // if (rightPressed) {
-                    //     // clientPlayer.x += 1;
-                    // } else if (leftPressed) {
-                    //     // clientPlayer.x -= 1;
-                    // }
-                    // if (upPressed) {
-                    //     // clientPlayer.y -= 1;
-                    // } else if (downPressed) {
-                    //     // clientPlayer.y += 1;
-                    // }
                 }
 
                 setInterval(update, 50);
 
-
+            
             });
         </script>
 
 
     </head>
     <body>
-        <!-- <img src='/static/sprites/eggMan/spriteSheet.png' width="108" height="112"> -->
         <canvas id="theCanvas" width="1000" height="700"></canvas>
         <h3>Room Code</h3>
         <p id="roomCodeP">---</p>
+        <p id="roomLinkP">---</p>
+        <button onclick="copyLink()">Copy link</button>
     </body>
 </html>
