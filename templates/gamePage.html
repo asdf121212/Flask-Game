@@ -7,7 +7,7 @@
         <style>
             * { padding: 0; margin: 0; }
             canvas { background: #eee; display: block; margin: 0 auto; }
-            body { background: rgb(2,0,36); background: linear-gradient(45deg, rgba(2,0,36,1) 0%, rgba(46,173,75,1) 0%, rgba(179,51,255,1) 100%); }
+            body { background: rgb(2,0,36); background: linear-gradient(45deg, rgba(46,173,75,1) 0%, rgba(179,51,255,1) 100%); }
         </style>
 
         <script type="text/javascript" charset="utf-8">
@@ -26,9 +26,7 @@
                 const userName = '{{userName}}';
                 // const playerId = parameters.substr(1).split('&')[2].split('=')[1];//////////////////
                 const playerId = '{{playerId}}';
-                if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-                    document.getElementById("roomCodeP").innerHTML = "mobile test";
-                }
+                
                 const origin = window.location.origin;
                 const canvas = document.getElementById("theCanvas");
                 const ctx = canvas.getContext("2d");
@@ -248,6 +246,88 @@
 
                 setInterval(update, 50);
 
+                if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+                    const buttonCanv = document.getElementById('buttonCanv');
+                    buttonCanv.width = 1000;
+                    buttonCanv.height = 700;
+                    const btnCtx = buttonCanv.getContext('2d');
+                    btnCtx.clearRect(0, 0, buttonCanv.width, buttonCanv.height);
+                    const dL = {
+                        x:520, y:350, w:100, h:100, id:'L'
+                    };
+                    const dUp = {
+                        x:630, y:240, w:100, h:100, id:'Up'
+                    };
+                    const dR = {
+                        x:740, y:350, w:100, h:100, id:'R'
+                    };
+                    const dDn = {
+                        x:630, y:460, w:100, h:100, id:'Dn'
+                    }
+                    const rects = [dL, dUp, dR, dDn];
+                    btnCtx.strokeStyle = 'rgba(46,173,75,1)';
+                    btnCtx.fillStyle = 'rgba(179,51,255,1)';
+                    rects.forEach((rect) => {
+                        btnCtx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+                        btnCtx.lineWidth = '3';
+                        btnCtx.beginPath();
+                        btnCtx.rect(rect.x - 3, rect.y - 3, rect.w + 6, rect.h + 6);
+                        btnCtx.stroke();
+                    })
+                    const boundingClientRect = buttonCanv.getBoundingClientRect();
+                    buttonCanv.addEventListener('click', (e) => {
+                        const mouseX = e.clientX - boundingClientRect.left;
+                        const mouseY = e.clientY - boundingClientRect.top;
+                        var clickedRectId = null;
+                        rects.forEach((rect) => {
+                            if (mouseX > rect.x && mouseX < rect.x+rect.w && mouseY < rect.y+rect.h && mouseY > rect.y) {
+                                clickedRectId = rect.id;
+                            }
+                        })
+                        if (clickedRectId != null) {
+                            if (clickedRectId == 'L') {
+                                if (leftPressed) {
+                                    leftPressed = false;
+                                } else {
+                                    leftPressed = true;
+                                }
+                                rightPressed = false;
+                                upPressed = false;
+                                downPressed = false;
+                            } else if (clickedRectId == 'R') {
+                                if (rightPressed) {
+                                    rightPressed = false;
+                                } else {
+                                    rightPressed = true;
+                                }
+                                leftPressed = false;
+                                upPressed = false;
+                                downPressed = false;
+                            } else if (clickedRectId == 'Up') {
+                                if (upPressed) {
+                                    upPressed = false;
+                                } else {
+                                    upPressed = true;
+                                }
+                                leftPressed = false;
+                                rightPressed = false;
+                                downPressed = false;
+                            } else if (clickedRectId == 'Dn') {
+                                if (downPressed) {
+                                    downPressed = false;
+                                } else {
+                                    downPressed = true;
+                                }
+                                leftPressed = false;
+                                rightPressed = false;
+                                upPressed = false;
+                            }
+                            update()
+                        }
+                    });
+                }
+
             
             });
         </script>
@@ -260,5 +340,6 @@
         <p id="roomCodeP">---</p>
         <p id="roomLinkP">---</p>
         <button onclick="copyLink()">Copy link</button>
+        <canvas id="buttonCanv" width="0" height="0" style="background-color: black;"></canvas>
     </body>
 </html>

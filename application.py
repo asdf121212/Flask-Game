@@ -9,7 +9,7 @@ import random
 from datetime import datetime as dt
 import os
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 GAME_DELETE_SECS = 10
 
 roomIds = []
