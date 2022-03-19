@@ -2,14 +2,14 @@ from pickle import TRUE
 from socket import socket
 from flask import Flask, redirect, request, escape, render_template, send_file
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from html_page import entryPage, gamePage
+# from html_page import entryPage, gamePage
 from game import Game
 import string
 import random
 from datetime import datetime as dt
 import os
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 GAME_DELETE_SECS = 10
 
 roomIds = []
@@ -42,8 +42,18 @@ socketio = SocketIO(application)
 
 @application.route("/")
 def index():
-    return entryPage
+    return send_file('entryPage.html')
 
+@application.route("/linked")
+def linkedJoin():
+    if 'room' in request.args.keys():
+        roomId = escape(request.args['room'])
+        if roomId in roomIds:
+            return render_template('linkedEntryPage.html', roomId=roomId)
+        else:
+            return '400'
+    else:
+        return '400'
 
 @application.route('/create')
 def create_game():
@@ -91,8 +101,16 @@ def join_game():
 
 @application.route('/game')
 def test():
+    if 'roomId' in request.args.keys() and 'name' in request.args.keys():
+            roomId = escape(request.args['roomId'])
+            userName = escape(request.args['name'])
+            playerId = escape(request.args['playerId'])
+            if roomId in roomIds:
+                return render_template('gamePage.html', roomId=roomId, userName=userName, playerId=playerId)
+            else:
+                return '400'
     # return gamePage
-    return send_file('static/gamePage.html')
+    # return send_file('static/gamePage.html')
 
 @socketio.on('connect')
 def connect_client():
@@ -152,6 +170,9 @@ def player_input(data):
 
 
 if __name__ == "__main__":
-    application.debug = True
-    socketio.run(application, port=int(os.environ.get('PORT')))
-    # socketio.run(application)
+    application.debug = DEBUG_MODE
+    if DEBUG_MODE:
+        socketio.run(application)
+    else:
+        socketio.run(application, port=int(os.environ.get('PORT')))
+    

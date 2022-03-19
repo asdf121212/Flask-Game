@@ -16,26 +16,29 @@
                 navigator.clipboard.writeText(copyText);
             }
             $(document).ready(function(){
-                const parameters = window.location.search;
-                const roomId = parameters.substr(1).split('&')[0].split('=')[1];
+                // const parameters = window.location.search;
+                // const roomId = parameters.substr(1).split('&')[0].split('=')[1];
+                const roomId = '{{roomId}}';
                 document.getElementById("roomCodeP").innerHTML = roomId;
-                document.getElementById("roomLinkP").innerHTML = "link copy test";
-                const userName = parameters.substr(1).split('&')[1].split('=')[1];
-                const playerId = parameters.substr(1).split('&')[2].split('=')[1];//////////////////
+                document.getElementById("roomLinkP").innerHTML = window.location.href.split('game')[0] + 'linked?room=' + roomId;
+                // const userName = parameters.substr(1).split('&')[1].split('=')[1];
+                const userName = '{{userName}}';
+                // const playerId = parameters.substr(1).split('&')[2].split('=')[1];//////////////////
+                const playerId = '{{playerId}}';
                 const origin = window.location.origin;
                 const canvas = document.getElementById("theCanvas");
                 const ctx = canvas.getContext("2d");
                 const gradient = ctx.createLinearGradient(0, 0, 1000, 700);
                 gradient.addColorStop(0, '#332738');
                 gradient.addColorStop(1, '#212621');
-                const PLAYER1X0 = 100;
-                const PLAYER1Y0 = 300;
-                const PLAYER2X0 = 400;
-                const PLAYER2Y0 = 100;
-                const PLAYER3X0 = 600;
-                const PLAYER3Y0 = 300;
-                const PLAYER4X0 = 400;
-                const PLAYER4Y0 = 300;
+                const PLAYER1X0 = 20;
+                const PLAYER1Y0 = 20;
+                const PLAYER2X0 = 930;
+                const PLAYER2Y0 = 630;
+                const PLAYER3X0 = 20;
+                const PLAYER3Y0 = 630;
+                const PLAYER4X0 = 930;
+                const PLAYER4Y0 = 20;
                 const EGGMAN_SPRITE_BASE_PATH = '/static/sprites/eggMan/';
                 const eggManSpriteSheets = {};
                 const colors = ['green', 'purple', 'yellow', 'cyan'];
