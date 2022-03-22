@@ -171,6 +171,7 @@ def player_input(data):
 
 if __name__ == "__main__":
     application.debug = DEBUG_MODE
+    application.jinja_env.autoescape = True
     if DEBUG_MODE:
         socketio.run(application)
     else:

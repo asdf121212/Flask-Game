@@ -15,13 +15,15 @@ PLAYER4Y0 = 20
 
 MAX_X = 946
 MAX_Y = 659
-MAX_DX = 5
-MAX_DY = 5
-DDX = 2
-DDY = 2
+MAX_DX = 100
+MAX_DY = 100
+DDX = 800
+DDY = 800
 
 T_STEP = 50000 #50 milliseconds
 TIMEOUT_TIME = 10 #seconds
+
+mspf = 0
 
 class Game:
 
@@ -93,55 +95,60 @@ class Game:
         player = self.players[playerId]
         #slowing down if no keys pressed
         # maxing out at 0 or max
+        delta_t = (dt.now() - player.timeOfLastResponse).microseconds / 1000000
         if keysPressed['leftPressed']:
             if player.dx > MAX_DX * -1:
-                player.dx -= DDX
+                player.dx -= DDX * delta_t
                 if player.dx < MAX_DX * -1:
                     player.dx = MAX_DX * -1
         elif keysPressed['rightPressed']:
             if player.dx < MAX_DX:
-                player.dx += DDX
+                player.dx += DDX * delta_t
                 if player.dx > MAX_DX:
                     player.dx = MAX_DX
         else:
             if player.dx < 0:
-                player.dx += DDX
+                player.dx += DDX * delta_t
                 if player.dx > 0:
                     player.dx = 0
             elif player.dx > 0:
-                player.dx -= DDX
+                player.dx -= DDX * delta_t
                 if player.dx < 0:
                     player.dx = 0
         if keysPressed['upPressed']:
             if player.dy > MAX_DY * -1:
-                player.dy -= DDY
+                player.dy -= DDY * delta_t
                 if player.dy < MAX_DY * -1:
                     player.dy = MAX_DY * -1
         elif keysPressed['downPressed']:
             if player.dy < MAX_DY:
-                player.dy += DDY
+                player.dy += DDY * delta_t
                 if player.dy > MAX_DY:
                     player.dy = MAX_DY
         else:
             if player.dy < 0:
-                player.dy += DDY
+                player.dy += DDY * delta_t
                 if player.dy > 0:
                     player.dy = 0
             elif player.dy > 0:
-                player.dy -= DDY
+                player.dy -= DDY * delta_t
                 if player.dy < 0:
                     player.dy = 0
         
-        player.x += player.dx
-        player.y += player.dy
+        player.x += player.dx * delta_t
+        player.y += player.dy * delta_t
         if player.x > MAX_X:
             player.x = MAX_X
+            player.dx = 0
         elif player.x < 0:
             player.x = 0
+            player.dx - 0
         if player.y > MAX_Y:
             player.y = MAX_Y
+            player.dy = 0
         elif player.y < 0:
             player.y = 0
+            player.dy = 0
 
         return player
 
