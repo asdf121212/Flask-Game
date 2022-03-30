@@ -17,15 +17,10 @@
             }
             
             $(document).ready(function(){
-                // const parameters = window.location.search;
-                // const roomId = parameters.substr(1).split('&')[0].split('=')[1];
-                
                 const roomId = '{{roomId}}';
                 document.getElementById("roomCodeP").innerHTML = roomId;
                 document.getElementById("roomLinkP").innerHTML = window.location.href.split('game')[0] + 'linked?room=' + roomId;
-                // const userName = parameters.substr(1).split('&')[1].split('=')[1];
                 const userName = '{{userName}}';
-                // const playerId = parameters.substr(1).split('&')[2].split('=')[1];//////////////////
                 const playerId = '{{playerId}}';
                 
                 const origin = window.location.origin;
@@ -165,29 +160,17 @@
                     }
                     clientPlayer = players[playerNumStr]
                 });
-                // socket.on('player removed', (data) => {
-                //     players[data.playerNumber] = null;
-                // });
-                // socket.on('input response', (data) => {
-                //     clientPlayer.x = data['x'];
-                //     clientPlayer.y = data['y'];
-                // });
                 socket.on('game update', (data) => {
-                    // console.log(JSON.stringify(data))
                     const gameState = data['gameState'];
                     const playersUpdate = gameState['players']
                     for (const player in playersUpdate) {
                         const pl = playersUpdate[player];
                         if (players[player] == null) {
                             players[player] = new Player(pl['name'], pl['x'], pl['y'], player);
-                            // players[player].dx = pl['dx']
-                            // players[player].dy = pl['dy']
                             players[player].walking = pl['walking']
                         } else {
                             players[player].x = pl['x'];
                             players[player].y = pl['y'];
-                            // players[player].dx = pl['dx'];
-                            // players[player].dy = pl['dy'];
                             players[player].walking = pl['walking']
                         }
                         if (pl['remove'] == true) {
@@ -237,12 +220,10 @@
                             currPlayer.drawSelf();
                         }
                     }
-                    // console.log(Date.now());
                     const input = {
                         'roomId' : roomId,
                         'playerId' : playerId,
                         'inputNum' : 0,
-                        // 'time' : Date.now(),
                         'rightPressed' : rightPressed,
                         'leftPressed' : leftPressed,
                         'upPressed' : upPressed,
@@ -252,8 +233,6 @@
                 }
 
                 setInterval(update, 50);
-                // window.requestAnimationFrame(update)
-
                 if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
                     const buttonCanv = document.getElementById('buttonCanv');
                     buttonCanv.width = 1000;

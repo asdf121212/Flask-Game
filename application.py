@@ -1,8 +1,5 @@
-from pickle import TRUE
-from socket import socket
 from flask import Flask, redirect, request, escape, render_template, send_file
 from flask_socketio import SocketIO, emit, join_room, leave_room
-# from html_page import entryPage, gamePage
 from game import Game, P_Input
 import string
 import random
@@ -102,15 +99,13 @@ def join_game():
 @application.route('/game')
 def test():
     if 'roomId' in request.args.keys() and 'name' in request.args.keys():
-            roomId = escape(request.args['roomId'])
-            userName = escape(request.args['name'])
-            playerId = escape(request.args['playerId'])
-            if roomId in roomIds:
-                return render_template('gamePage.html', roomId=roomId, userName=userName, playerId=playerId)
-            else:
-                return '400'
-    # return gamePage
-    # return send_file('static/gamePage.html')
+        roomId = escape(request.args['roomId'])
+        userName = escape(request.args['name'])
+        playerId = escape(request.args['playerId'])
+        if roomId in roomIds:
+            return render_template('gamePage.html', roomId=roomId, userName=userName, playerId=playerId)
+        else:
+            return '400'
 
 @socketio.on('connect')
 def connect_client():
@@ -128,8 +123,6 @@ def client_join(data):
             if room not in roomIds:
                 return '400'
             game = games[room]
-            # if len(game.players) < 4:
-                # player = game.addPlayer(name)
             player = game.players[playerId]
             join_room(room)
             emit('join gamestate', { 'playerNumber':player.playerNumStr, 'gamestate': game.getPlayerDict() })
@@ -151,8 +144,6 @@ def player_input(data):
         if playerId not in games[roomId].players:
             return '400'
         inputNum = escape(data['inputNum'])
-        # dateString = escape(data['time'])
-        # t = dt.fromtimestamp(int(dateString) / 1000.0)
         keysPressed = { 'leftPressed' : False, 'rightPressed': False, 'upPressed' : False, 'downPressed' : False }
         
         leftPressed = escape(data['leftPressed'])
@@ -160,12 +151,11 @@ def player_input(data):
         upPressed = escape(data['upPressed'])
         downPressed = escape(data['downPressed'])
         keysPressed['leftPressed'] = leftPressed == 'True'
-        keysPressed['rightPressed'] = rightPressed == 'True'# and not (leftPressed == 'True')
+        keysPressed['rightPressed'] = rightPressed == 'True'
         keysPressed['upPressed'] = upPressed == 'True'
-        keysPressed['downPressed'] = downPressed == 'True'# and not (upPressed == 'True')
+        keysPressed['downPressed'] = downPressed == 'True'
         p_input = P_Input(keysPressed, inputNum)
         handleInput(roomId, playerId, p_input)
-        # emit('input response', { 'x' : player.x, 'y' : player.y })
     except Exception as e:
         if DEBUG_MODE:
             print('player input error / handle player input error')
