@@ -3,13 +3,13 @@ from socket import socket
 from flask import Flask, redirect, request, escape, render_template, send_file
 from flask_socketio import SocketIO, emit, join_room, leave_room
 # from html_page import entryPage, gamePage
-from game import Game
+from game import Game, P_Input
 import string
 import random
 from datetime import datetime as dt
 import os
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 GAME_DELETE_SECS = 10
 
 roomIds = []
@@ -27,11 +27,11 @@ def generateNewRoomId():
 
 
 #should check if input is in an acceptable list
-def handleInput(roomId, playerId, keysPressed):
-    player, gameUpdate = games[roomId].handleInput(playerId, keysPressed)
+def handleInput(roomId, playerId, p_input):
+    gameUpdate = games[roomId].handleInput(playerId, p_input)
     if gameUpdate != None:
         socketio.emit("game update", {'gameState' : gameUpdate}, to=roomId)
-    return player
+    # return player
 
 
 # EB looks for an 'application' callable by default.
@@ -150,6 +150,9 @@ def player_input(data):
         playerId = escape(data['playerId'])
         if playerId not in games[roomId].players:
             return '400'
+        inputNum = escape(data['inputNum'])
+        # dateString = escape(data['time'])
+        # t = dt.fromtimestamp(int(dateString) / 1000.0)
         keysPressed = { 'leftPressed' : False, 'rightPressed': False, 'upPressed' : False, 'downPressed' : False }
         
         leftPressed = escape(data['leftPressed'])
@@ -160,12 +163,14 @@ def player_input(data):
         keysPressed['rightPressed'] = rightPressed == 'True'# and not (leftPressed == 'True')
         keysPressed['upPressed'] = upPressed == 'True'
         keysPressed['downPressed'] = downPressed == 'True'# and not (upPressed == 'True')
-        player = handleInput(roomId, playerId, keysPressed)
-        emit('input response', { 'x' : player.x, 'y' : player.y })
+        p_input = P_Input(keysPressed, inputNum)
+        handleInput(roomId, playerId, p_input)
+        # emit('input response', { 'x' : player.x, 'y' : player.y })
     except Exception as e:
         if DEBUG_MODE:
             print('player input error / handle player input error')
             print(e)
+            if DEBUG_MODE: raise
         return '400'
 
 

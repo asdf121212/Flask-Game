@@ -95,6 +95,7 @@
                         this.sheets;
                         this.hasEgg = false;
                         this.dying = false;
+                        this.walking = false;
                         this.animCount = 0;
                         if (numStr == 'player1') {
                             this.sheets = eggManSpriteSheets['green'];
@@ -117,7 +118,7 @@
                         } else {
                             sheet = 'front';
                         }
-                        if (this.dx == 0 && this.dy == 0) {
+                        if (!this.walking) {
                             if (this.animCount < 10) {
                                 mode = 'restUp';
                             } else if (this.animCount >= 10 && this.animCount < 20) {
@@ -167,10 +168,10 @@
                 // socket.on('player removed', (data) => {
                 //     players[data.playerNumber] = null;
                 // });
-                socket.on('input response', (data) => {
-                    clientPlayer.x = data['x'];
-                    clientPlayer.y = data['y'];
-                });
+                // socket.on('input response', (data) => {
+                //     clientPlayer.x = data['x'];
+                //     clientPlayer.y = data['y'];
+                // });
                 socket.on('game update', (data) => {
                     // console.log(JSON.stringify(data))
                     const gameState = data['gameState'];
@@ -179,13 +180,15 @@
                         const pl = playersUpdate[player];
                         if (players[player] == null) {
                             players[player] = new Player(pl['name'], pl['x'], pl['y'], player);
-                            players[player].dx = pl['dx']
-                            players[player].dy = pl['dy']
+                            // players[player].dx = pl['dx']
+                            // players[player].dy = pl['dy']
+                            players[player].walking = pl['walking']
                         } else {
                             players[player].x = pl['x'];
                             players[player].y = pl['y'];
-                            players[player].dx = pl['dx'];
-                            players[player].dy = pl['dy'];
+                            // players[player].dx = pl['dx'];
+                            // players[player].dy = pl['dy'];
+                            players[player].walking = pl['walking']
                         }
                         if (pl['remove'] == true) {
                             players[player] = null;
@@ -234,9 +237,12 @@
                             currPlayer.drawSelf();
                         }
                     }
+                    // console.log(Date.now());
                     const input = {
                         'roomId' : roomId,
                         'playerId' : playerId,
+                        'inputNum' : 0,
+                        // 'time' : Date.now(),
                         'rightPressed' : rightPressed,
                         'leftPressed' : leftPressed,
                         'upPressed' : upPressed,
@@ -246,6 +252,7 @@
                 }
 
                 setInterval(update, 50);
+                // window.requestAnimationFrame(update)
 
                 if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
                     const buttonCanv = document.getElementById('buttonCanv');
