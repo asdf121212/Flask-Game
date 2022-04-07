@@ -194,6 +194,7 @@
                                 dx += req.dx
                                 dy += req.dy
                             }
+                            console.log(dx)
                             clientPlayer.x = hostX + dx;
                             clientPlayer.y = hostY + dy;
 
@@ -282,7 +283,7 @@
                     var dy = 0;
                     if (input['leftPressed']) {
                         dx = -DX * delta_t;
-                        clientPlayer.x -= dx;
+                        clientPlayer.x += dx;
                         clientPlayer.walking = true;
                     } else if (input['rightPressed']) {
                         dx = DX * delta_t;
@@ -290,7 +291,7 @@
                         clientPlayer.walking = true;
                     } else if (input['upPressed']) {
                         dy = -DY * delta_t;
-                        clientPlayer.y -= dy;
+                        clientPlayer.y += dy;
                         clientPlayer.walking = true;
                     } else if (input['downPressed']) {
                         dy = DY * delta_t;

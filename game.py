@@ -17,7 +17,7 @@ MAX_Y = 659
 DX = 100
 DY = 100
 
-T_STEP_PHYS = 25000 #10 milliseconds
+T_STEP_PHYS = 25000 #25 milliseconds
 T_STEP_BROADCAST = 50000 #50 milliseconds
 TIMEOUT_TIME = 10 #seconds
 
