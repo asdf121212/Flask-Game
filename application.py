@@ -1,6 +1,6 @@
 from flask import Flask, redirect, request, escape, render_template, send_file
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from game import Game, P_Input
+from game import Game
 import string
 import random
 from datetime import datetime as dt
@@ -24,8 +24,8 @@ def generateNewRoomId():
 
 
 #should check if input is in an acceptable list
-def handleInput(roomId, playerId, p_input):
-    gameUpdate = games[roomId].handleInput(playerId, p_input)
+def handleInput(roomId, playerId, keysPressed, inputNum):
+    gameUpdate = games[roomId].handleInput(playerId, keysPressed, inputNum)
     if gameUpdate != None:
         socketio.emit("game update", {'gameState' : gameUpdate}, to=roomId)
     # return player
@@ -154,8 +154,7 @@ def player_input(data):
         keysPressed['rightPressed'] = rightPressed == 'True'
         keysPressed['upPressed'] = upPressed == 'True'
         keysPressed['downPressed'] = downPressed == 'True'
-        p_input = P_Input(keysPressed, inputNum)
-        handleInput(roomId, playerId, p_input)
+        handleInput(roomId, playerId, keysPressed, inputNum)
     except Exception as e:
         if DEBUG_MODE:
             print('player input error / handle player input error')

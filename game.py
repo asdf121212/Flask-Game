@@ -81,7 +81,7 @@ class Game:
         playerDict['players'] = {}
         for playerId in self.players.keys():
             player = self.players[playerId]
-            playerDict['players'][player.playerNumStr] = { 'name' : player.name, 'x' : player.x, 'y' : player.y, 'walking' : player.walking, 'hasEgg' : player.hasEgg, 'dying' : player.dying, 'remove' : False }
+            playerDict['players'][player.playerNumStr] = { 'name' : player.name, 'x' : player.x, 'y' : player.y, 'walking' : player.walking, 'hasEgg' : player.hasEgg, 'dying' : player.dying, 'lastInputNum' : player.lastReceivedInputNum, 'remove' : False }
         return playerDict
 
 
@@ -109,8 +109,8 @@ class Game:
         pass
 
     #keysPressed - { 'leftPressed' : bool, 'rightPressed' : bool, etc. }
-    def handleInput(self, playerId, p_input):
-        self.players[playerId].addInput(p_input)
+    def handleInput(self, playerId, keysPressed, inputNum):
+        self.players[playerId].addInput(keysPressed, inputNum)
         gameUpdate = None
         phys_dt = dt.now() - self.timeOfLastPhys
         if phys_dt.microseconds >= T_STEP_PHYS or phys_dt.seconds >= 1:
@@ -161,18 +161,13 @@ class Player:
         self.inputCount = 0
         self.inputCounts = {}
 
-    def addInput(self, p_input):
+    def addInput(self, keysPressed, inputNum):
         self.timeOfLastResponse = dt.now()
         self.inputCount += 1
-        self.lastReceivedInputNum = p_input.inputNum
-        for inp in p_input.keysPressed.keys():
-            if p_input.keysPressed[inp]:
+        self.lastReceivedInputNum = inputNum
+        for inp in keysPressed.keys():
+            if keysPressed[inp]:
                 if inp in self.inputCounts.keys():
                     self.inputCounts[inp] += 1
                 else:
                     self.inputCounts[inp] = 1
-
-class P_Input:
-    def __init__(self, keysPressed, inputNum):
-        self.keysPressed = keysPressed
-        self.inputNum = inputNum

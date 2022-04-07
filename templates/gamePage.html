@@ -22,7 +22,11 @@
                 document.getElementById("roomLinkP").innerHTML = window.location.href.split('game')[0] + 'linked?room=' + roomId;
                 const userName = '{{userName}}';
                 const playerId = '{{playerId}}';
-                
+                // window.requestAnimationFrame =
+                //     window.requestAnimationFrame ||
+                //     window.mozRequestAnimationFrame ||
+                //     window.webkitRequestAnimationFrame ||
+                //     window.msRequestAnimationFrame;
                 const origin = window.location.origin;
                 const canvas = document.getElementById("theCanvas");
                 const ctx = canvas.getContext("2d");
@@ -37,6 +41,10 @@
                 const PLAYER3Y0 = 630;
                 const PLAYER4X0 = 930;
                 const PLAYER4Y0 = 20;
+                const DX = 100
+                const DY = 100
+                const MAX_X = 946
+                const MAX_Y = 659
                 const EGGMAN_SPRITE_BASE_PATH = '/static/sprites/eggMan/';
                 const eggManSpriteSheets = {};
                 const colors = ['green', 'purple', 'yellow', 'cyan'];
@@ -64,9 +72,12 @@
                     w4 : { sx : 54, sy : 126, swidth : 54, sheight : 42 },
                 }
 
-                //1, 2, etc.
+                //player1, player2, etc.
                 var playerNumber;
                 var clientPlayer;
+                var lastUpdate_t = performance.now();
+                var reqQueue = []; //: { inputNum, t, dx, dy }
+                var lastInputNum = 0;
                 
                 const players = {
                     player1: null,
@@ -85,8 +96,8 @@
                         this.name = playerName;
                         this.x = x;
                         this.y = y;
-                        this.dx = 0;
-                        this.dy = 0;
+                        // this.dx = 0;
+                        // this.dy = 0;
                         this.sheets;
                         this.hasEgg = false;
                         this.dying = false;
@@ -153,8 +164,9 @@
                     });
                 });
                 socket.on('join gamestate', (data) => {
-                    playerNumStr = data['playerNumber'];
-                    allPlayers = data['gamestate']['players'];
+                    const playerNumStr = data['playerNumber'];
+                    playerNumber = playerNumStr;
+                    const allPlayers = data['gamestate']['players'];
                     for (const playerN in allPlayers) {
                         players[playerN] = new Player(allPlayers[playerN].name, allPlayers[playerN].x, allPlayers[playerN].y, playerN);
                     }
@@ -165,16 +177,39 @@
                     const playersUpdate = gameState['players']
                     for (const player in playersUpdate) {
                         const pl = playersUpdate[player];
-                        if (players[player] == null) {
+                        if (player == playerNumber) {
+                            const hostLastInput = pl['lastInputNum']
+                            //edge case -- empty queue ??
+                            const hostX = pl['x'];
+                            const hostY = pl['y'];
+                            var i = 0;
+                            while (reqQueue[i].inputNum != lastInputNum && i < reqQueue.length) {
+                                i++;
+                            }
+                            // const processedInputs = reqQueue.slice(0, i);
+                            reqQueue = reqQueue.slice(i);
+                            var dx = 0;
+                            var dy = 0;
+                            for (const req of reqQueue) {
+                                dx += req.dx
+                                dy += req.dy
+                            }
+                            clientPlayer.x = hostX + dx;
+                            clientPlayer.y = hostY + dy;
+
+
+                        } else {
+                            if (players[player] == null) {
                             players[player] = new Player(pl['name'], pl['x'], pl['y'], player);
                             players[player].walking = pl['walking']
-                        } else {
-                            players[player].x = pl['x'];
-                            players[player].y = pl['y'];
-                            players[player].walking = pl['walking']
-                        }
-                        if (pl['remove'] == true) {
-                            players[player] = null;
+                            } else {
+                                players[player].x = pl['x'];
+                                players[player].y = pl['y'];
+                                players[player].walking = pl['walking']
+                            }
+                            if (pl['remove'] == true) {
+                                players[player] = null;
+                            }
                         }
                     }
                 });
@@ -206,9 +241,20 @@
                     }
                 }
 
+                function getInputNum() {
+                    lastInputNum++;
+                    if (lastInputNum < 100) {
+                        return lastInputNum;
+                    } else {
+                        lastInputNum = 0;
+                        return 0;
+                    }
+                }
+
                 function update() {
                     if (clientPlayer == null) {
-                        return;
+                        // requestAnimationFrame(update);
+                        return
                     }
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     ctx.fillStyle = gradient;
@@ -220,19 +266,58 @@
                             currPlayer.drawSelf();
                         }
                     }
+                    lastInputNum = getInputNum();
                     const input = {
                         'roomId' : roomId,
                         'playerId' : playerId,
-                        'inputNum' : 0,
+                        'inputNum' : lastInputNum,
                         'rightPressed' : rightPressed,
                         'leftPressed' : leftPressed,
                         'upPressed' : upPressed,
                         'downPressed' : downPressed
                     };
-                    socket.emit('playerInput', input)
+                    var t = performance.now();
+                    var delta_t = (t - lastUpdate_t) / 1000;
+                    var dx = 0;
+                    var dy = 0;
+                    if (input['leftPressed']) {
+                        dx = DX * delta_t;
+                        clientPlayer.x -= dx;
+                        clientPlayer.walking = true;
+                    } else if (input['rightPressed']) {
+                        dx = DX * delta_t;
+                        clientPlayer.x += dx;
+                        clientPlayer.walking = true;
+                    } else if (input['upPressed']) {
+                        dy = DY * delta_t;
+                        clientPlayer.y -= dy;
+                        clientPlayer.walking = true;
+                    } else if (input['downPressed']) {
+                        dy = DY * delta_t;
+                        clientPlayer.y += dy;
+                        clientPlayer.walking = true;
+                    } else {
+                        clientPlayer.walking = false;
+                    }
+                    if (clientPlayer.x > MAX_X) {
+                        clientPlayer.x = MAX_X
+                    } else if (clientPlayer.x < 0) {
+                        clientPlayer.x = 0
+                    }
+                    if (clientPlayer.y > MAX_Y) {
+                        clientPlayer.y = MAX_Y
+                    } else if (clientPlayer.y < 0) {
+                        clientPlayer.y = 0
+                    }
+                    lastUpdate_t = t;
+                    socket.emit('playerInput', input);
+                    reqQueue.push({ inputNum: lastInputNum, t: t, dx: dx, dy: dy });
+                    // window.requestAnimationFrame(update)
                 }
 
                 setInterval(update, 50);
+                // window.requestAnimationFrame(update);
+
                 if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
                     const buttonCanv = document.getElementById('buttonCanv');
                     buttonCanv.width = 1000;
