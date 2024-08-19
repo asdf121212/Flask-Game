@@ -5,6 +5,8 @@ import string
 import random
 from datetime import datetime as dt
 import os
+import eventlet
+eventlet.monkey_patch(socket=True)
 
 DEBUG_MODE = True
 GAME_DELETE_SECS = 10
