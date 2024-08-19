@@ -42,7 +42,7 @@
                 const PLAYER4X0 = 930;
                 const PLAYER4Y0 = 20;
                 const DX = 100
-                const DY = 100
+                const DY = 100//////////////////////////////
                 const MAX_X = 946
                 const MAX_Y = 659
                 const EGGMAN_SPRITE_BASE_PATH = '/static/sprites/eggMan/';
@@ -78,6 +78,8 @@
                 var lastUpdate_t = performance.now();
                 var reqQueue = []; //: { inputNum, t, dx, dy }
                 var lastInputNum = 0;
+                var offsetX = 0;
+                var offsetY = 0;
                 
                 const players = {
                     player1: null,
@@ -187,18 +189,24 @@
                                 i++;
                             }
                             // const processedInputs = reqQueue.slice(0, i);
-                            reqQueue = reqQueue.slice(i);
-                            var dx = 0;
-                            var dy = 0;
-                            for (const req of reqQueue) {
-                                dx += req.dx
-                                dy += req.dy
+                            if (i < reqQueue.length) {
+                                // const corresponding_req = reqQueue[i];
+                                offsetX = reqQueue[i].x - hostX;
+                                offsetY = reqQueue[i].y - hostY;
+                                reqQueue = reqQueue.slice(i);
+                                // var dx = 0;
+                                // var dy = 0;
+                                // for (const req of reqQueue) {
+                                //     dx += req.dx
+                                //     dy += req.dy
+                                // }
+                                
+                                // clientPlayer.x = hostX + dx;
+                                // clientPlayer.y = hostY + dy;
+                            } else {
+                                reqQueue = [];
                             }
-                            console.log(dx)
-                            clientPlayer.x = hostX + dx;
-                            clientPlayer.y = hostY + dy;
-
-
+                            
                         } else {
                             if (players[player] == null) {
                             players[player] = new Player(pl['name'], pl['x'], pl['y'], player);
@@ -310,8 +318,22 @@
                     } else if (clientPlayer.y < 0) {
                         clientPlayer.y = 0
                     }
+
+                    
+                    correctionX = offsetX / 30;
+                    correctionY = offsetY / 30;
+                    clientPlayer.x -= correctionX;
+                    clientPlayer.y -= correctionY;
+                    // offsetX -= correctionX;
+                    // offsetY -= correctionY;
+                    
+                    // console.log("delta t:  " + delta_t);
+                    // console.log("offsetX:  " + offsetX);
+                    // console.log("correctionX:  " + correctionX);
+
+
                     lastUpdate_t = t;
-                    reqQueue.push({ inputNum: lastInputNum, t: t, dx: dx, dy: dy });
+                    reqQueue.push({ inputNum: lastInputNum, t: t, dx: dx, dy: dy, x: clientPlayer.x, y: clientPlayer.y });///store player x and player y here
                     socket.emit('playerInput', input);
                     // window.requestAnimationFrame(update)
                 }

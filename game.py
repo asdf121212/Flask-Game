@@ -1,6 +1,7 @@
 import random
 import string
 from datetime import datetime as dt
+from warnings import catch_warnings
 
 
 PLAYER1X0 = 20
@@ -17,8 +18,8 @@ MAX_Y = 659
 DX = 100
 DY = 100
 
-T_STEP_PHYS = 25000 #25 milliseconds
-T_STEP_BROADCAST = 50000 #50 milliseconds
+T_STEP_PHYS = 25000 #25 milliseconds (75000 --- 75ms to debug)
+T_STEP_BROADCAST = 50000 #50 milliseconds (150000 --- 150ms to debug)
 TIMEOUT_TIME = 10 #seconds
 
 mspf = 0
@@ -165,9 +166,29 @@ class Player:
         self.timeOfLastResponse = dt.now()
         self.inputCount += 1
         self.lastReceivedInputNum = inputNum
-        for inp in keysPressed.keys():
-            if keysPressed[inp]:
-                if inp in self.inputCounts.keys():
-                    self.inputCounts[inp] += 1
+        ###maybe change this to an if - else block ################################
+        try:
+            key = None
+            if keysPressed['leftPressed']:
+                key = 'leftPressed'
+            elif keysPressed['rightPressed']:
+                key = 'rightPressed'
+            elif keysPressed['upPressed']:
+                key = 'upPressed'
+            elif keysPressed['downPressed']:
+                key = 'downPressed'
+            if key != None:
+                if key in self.inputCounts.keys():
+                    self.inputCounts[key] += 1
+                    return
                 else:
-                    self.inputCounts[inp] = 1
+                    self.inputCounts[key] = 1
+        except Exception as e:
+            print(e)
+        # for inp in keysPressed.keys():
+        #     if keysPressed[inp]:
+        #         if inp in self.inputCounts.keys():
+        #             self.inputCounts[inp] += 1
+        #             return
+        #         else:
+        #             self.inputCounts[inp] = 1
